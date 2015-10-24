@@ -1,0 +1,226 @@
+var path = require('path');
+var nconf = require('nconf');
+nconf.file(path.join(__dirname, '..', 'config.json'));
+var request = require('request');
+var util = require('util');
+var events = require('events');
+var child_process = require('child_process');
+
+
+// api notes here http://wiki.vg/Authentication
+
+
+var Minecraft = function Minecraft() {
+    
+    
+    var self = this;
+
+    this.starting = false;
+    this.ready = false;
+
+    events.EventEmitter.call(this);
+}
+
+
+/**
+ * makeReady
+ *
+ * makes the minecraft client ready. does this by authenticating user account with mojang.
+ *
+ * @param {makeReadyDoneCallback} cb
+ */
+Minecraft.prototype.makeReady = function makeReady(cb) {
+
+    var username = nconf.get('minecraft_observer_username');
+    var password = nconf.get('minecraft_observer_password');
+    var accessToken = nconf.get('minecraft_observer_access_token');
+
+    if (typeof(username) === 'undefined') return cb(new Error('username not defined in config.json'));
+    if (typeof(password) === 'undefined') return cb(new Error('password not defined in config.json'));
+
+    // if access token is undefined in config.json, log in, get, and save new token
+    if (typeof(accessToken) === 'undefined') {
+	login(username, password, function(err, token) {
+	    if (err) return cb(new Error('first time login failed- ' + err));
+	    nconf.set('minecraft_observer_access_token', token);
+	    nconf.save();
+	    
+	    this.ready = true;
+	    return cb(null);
+	});
+    }
+
+    // access token is defined, so check to see that it is still valid with mojang
+    else {
+	validate(accessToken, function(err) {
+	    if (err) return cb(new Error('could not validate with Yggdrasil- ' + err));
+
+	    this.ready = true;
+	    return cb(null);
+	});
+    }
+}
+/**
+ * makeReadyDoneCallback
+ *
+ * errors if error occured, or returns null if minecraft is now ready
+ *
+ * @callback {makeReadyDoneCallback}
+ * @param {Error} err
+ */
+
+
+
+/**
+ * start
+ *
+ * starts the game
+ */
+Minecraft.prototype.start = function start() {
+    var self = this;
+
+    if (self.ready) {
+	self.emit('error', new Error('minecraft client is already running'));
+    }
+    if (self.starting) {
+	self.emit('error', new Error('minecraft client is already starting'));
+	this.starting = true;
+    }
+
+    
+
+    // start minecraft
+    var child = child_process.spawn('/usr/lib/jvm/java-8-oracle/jre/bin/java', [
+	'-Xmx1024m',
+	'-Djava.library.path=/home/rabbit/.technic/modpacks/vanilla/bin/natives',
+	'-Dfml.core.libraries.mirror=http://mirror.technicpack.net/Technic/lib/fml/%s',
+	'-Dminecraft.applet.TargetDirectory=/home/rabbit/.technic/modpacks/vanilla',
+	'-Djava.net.preferIPv4Stack=true',
+	'-cp /home/rabbit/.technic/modpacks/vanilla/bin/modpack.jar:/home/rabbit/.technic/cache/oshi-project/oshi-core/1.1/oshi-core-1.1.jar:/home/rabbit/.technic/cache/net/java/dev/jna/jna/3.4.0/jna-3.4.0.jar:/home/rabbit/.technic/cache/net/java/dev/jna/platform/3.4.0/platform-3.4.0.jar:/home/rabbit/.technic/cache/com/ibm/icu/icu4j-core-mojang/51.2/icu4j-core-mojang-51.2.jar:/home/rabbit/.technic/cache/net/sf/jopt-simple/jopt-simple/4.6/jopt-simple-4.6.jar:/home/rabbit/.technic/cache/com/paulscode/codecjorbis/20101023/codecjorbis-20101023.jar:/home/rabbit/.technic/cache/com/paulscode/codecwav/20101023/codecwav-20101023.jar:/home/rabbit/.technic/cache/com/paulscode/libraryjavasound/20101123/libraryjavasound-20101123.jar:/home/rabbit/.technic/cache/com/paulscode/librarylwjglopenal/20100824/librarylwjglopenal-20100824.jar:/home/rabbit/.technic/cache/com/paulscode/soundsystem/20120107/soundsystem-20120107.jar:/home/rabbit/.technic/cache/io/netty/netty-all/4.0.23.Final/netty-all-4.0.23.Final.jar:/home/rabbit/.technic/cache/com/google/guava/guava/17.0/guava-17.0.jar:/home/rabbit/.technic/cache/org/apache/commons/commons-lang3/3.3.2/commons-lang3-3.3.2.jar:/home/rabbit/.technic/cache/commons-io/commons-io/2.4/commons-io-2.4.jar:/home/rabbit/.technic/cache/commons-codec/commons-codec/1.9/commons-codec-1.9.jar:/home/rabbit/.technic/cache/net/java/jinput/jinput/2.0.5/jinput-2.0.5.jar:/home/rabbit/.technic/cache/net/java/jutils/jutils/1.0.0/jutils-1.0.0.jar:/home/rabbit/.technic/cache/com/google/code/gson/gson/2.2.4/gson-2.2.4.jar:/home/rabbit/.technic/cache/com/mojang/authlib/1.5.21/authlib-1.5.21.jar:/home/rabbit/.technic/cache/com/mojang/realms/1.7.22/realms-1.7.22.jar:/home/rabbit/.technic/cache/org/apache/commons/commons-compress/1.8.1/commons-compress-1.8.1.jar:/home/rabbit/.technic/cache/org/apache/httpcomponents/httpclient/4.3.3/httpclient-4.3.3.jar:/home/rabbit/.technic/cache/commons-logging/commons-logging/1.1.3/commons-logging-1.1.3.jar:/home/rabbit/.technic/cache/org/apache/httpcomponents/httpcore/4.3.2/httpcore-4.3.2.jar:/home/rabbit/.technic/cache/org/apache/logging/log4j/log4j-api/2.0-beta9/log4j-api-2.0-beta9.jar:/home/rabbit/.technic/cache/org/apache/logging/log4j/log4j-core/2.0-beta9/log4j-core-2.0-beta9.jar:/home/rabbit/.technic/cache/org/lwjgl/lwjgl/lwjgl/2.9.4-nightly-20150209/lwjgl-2.9.4-nightly-20150209.jar:/home/rabbit/.technic/cache/org/lwjgl/lwjgl/lwjgl_util/2.9.4-nightly-20150209/lwjgl_util-2.9.4-nightly-20150209.jar:/home/rabbit/.technic/cache/tv/twitch/twitch/6.5/twitch-6.5.jar:/home/rabbit/.technic/modpacks/vanilla/bin/minecraft.jar',
+	'net.minecraft.client.main.Main',
+	'--username insanity54',
+	'--version 1.8.7',
+	'--gameDir /home/rabbit/.technic/modpacks/vanilla',
+	'--assetsDir /home/rabbit/.technic/assets',
+	'--assetIndex 1.8',
+	'--uuid e642f297bd15491bb68d8370fec95bcf',
+	'--accessToken 0c2496042ae746ebb573bbcb65cdce50',
+	'--userProperties {}',
+	'--userType legacy',
+	'--title Vanilla',
+	'--icon /home/rabbit/.technic/assets/packs/vanilla/icon.png'
+    ],
+				    {cwd: '/home/rabbit/.technic/modpacks/vanilla/bin'});
+
+    self.child = child;
+
+    child.on('close', function(code, signal) {
+	if (self.running) {
+	    self.emit('stop', code, signal);
+	}
+	else {
+	    self.emit('error', new Error('failed to start'));
+	}
+
+	self.ready = false;
+	self.starting = false;
+	
+    });
+}
+
+
+
+
+
+
+
+/**
+ * log in to mojangs servers, get an auth token which can be used for about a month instead of using password
+ *
+ * @param {string} user - username to log in as
+ * @param {string} pass - password to use to log in
+ * @param {loginDoneCallback} cb
+ */
+var login = function login(user, pass, cb) {
+    request({
+	method: "POST",
+	uri: "https://authserver.mojang.com/authenticate",
+	json: true,
+	body: {
+	    "username": user,
+	    "password": pass
+	}
+
+    }, onResponse );
+    
+    function onResponse(err, response, body) {
+	if (err) throw err;
+	console.log('got response');
+	//console.log(response);
+	console.log(body);
+	
+	if (typeof(body.accessToken) === 'undefined') throw new Error('problem logging in, could not get access token- ' + body);
+	if (typeof(body.clientToken) === 'undefined') throw new Error('problem logging in, could not get client token- ' + body);
+	nconf.set('minecraft_observer_access_token', body.accessToken);
+	nconf.set('minecraft_observer_client_token', body.clientToken);
+	nconf.save();
+	
+    }
+}
+/**
+ * loginDoneCallback
+ *
+ * @callback {loginDoneCallback}
+ * @param {Error} err
+ * @param {string} token - the accessToken given to us by Yggdrasil
+ */
+
+
+	    
+
+/**
+ * validate
+ *
+ * verify that the auth token we have is good for logging in.
+ *
+ * @param {string} accessToken - the minecraft accessToken granted to us by Yggdrasil (mojang)
+ * @param {validateDoneCallback} cb
+ */
+var validate = function validate(accessToken, cb) {
+    if (typeof(accessToken) === 'undefined') return cb(new Error('no access token is in config.json'));
+    
+    
+    request({
+	method: "POST",
+	uri: "https://authserver.mojang.com/validate",
+	json: true,
+	body: {
+	    "accessToken": accessToken
+	}
+	
+    }, onResponse );
+    
+    function onResponse(err, res, body) {
+	if (err) throw err;
+	// 204 No Content if valid
+	// 403 Forbidden if invalid
+	if (res.statusCode != '204') return cb(new Error('validation failed with status code ' + res.statusCode));
+	return cb(null);
+    }
+}
+/**
+ * validateDoneCallback
+ *
+ * first param is error if error occured or not valid
+ * first param null if token is valid
+ *
+ * @callback {validateDoneCallback}
+ * @param {Error} err
+ */
+	
+
+
+util.inherits(Minecraft, events.EventEmitter);
+
+	    
+module.exports.Minecraft = Minecraft;
