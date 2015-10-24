@@ -1,7 +1,8 @@
-//var minetroller = require('./minetroller');
+var path = require('path');
+var minetroller = require(path.join(__dirname, 'server', 'minetroller'));
 var vorpal = require('vorpal')();
-var tweeter = require('./tweeter');
-var observer = require('./observer');
+var tweeter = require(path.join(__dirname, 'server', 'tweeter'));
+var observer = require(path.join(__dirname, 'server', 'observer'));
 
 
 
@@ -24,8 +25,7 @@ vorpal
 	this.log('stopping server');
 	minetroller.stopServer(function(err) {
 
-	    if (err) this.log('error while stopping server ' +
-			      err);
+	    if (err) this.log('error while stopping server ' + err);
 	    cb();
 	});
     });
@@ -35,31 +35,15 @@ vorpal
     .command('screenshot [player]', 'makes insanity54 take a screenshot of the specified player')
     .action(function(args, cb) {
 
-	this.log('moving insanity54 to player ' + player);
 	minetroller.moveObserver(args.player, function(err) {
 	    if (err) {
-		this.log('error while moving oberver- ' + err);
+		console.log('error while moving oberver- ' + err);
 		cb(err)
 	    }
 
-	    this.log('say cheese!');
-	    observer.sayCheese(function(err) {
-		if (err) {
-		    this.log('error while saying cheese- ' + err);
-		    cb(err);
-		}
-
-
-		this.log('taking snapshot');
-		observer.takeSnapshot(function(err, filename) {
-		    if (err) {
-			this.log('error while taking snapshot');
-			cb(err);
-		    }
-
-		    // all good
-		    cb();
-		});
+	    observer.takeSnapshot(function(err, imgData) {
+		if (err) cb(new Error('problem while telling the observer to take a snapshot'));
+		cb();
 	    });
 	});
     });
@@ -96,6 +80,15 @@ vorpal
 //
 
 
+// close minecraft server if Ctrl+C caught
+vorpal.sigint(function() {
+    console.log("Caught interrupt signal. Stopping MC server");
+
+    minetroller.stopServer(function(err) {
+	if (err) throw err;
+ 	process.exit();
+    });
+});
 
 
 
