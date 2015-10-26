@@ -24,7 +24,7 @@ var util = require('util');
 var events = require('events');
 var redis = require('redis');
 var input = require('./input');
-var Minecraft = require('./minecraft');
+var minecraft = require('./minecraft');
 
 
 var redisOpts = nconf.get('redis_client_options');
@@ -36,7 +36,7 @@ var redPub = redis.createClient(redisOpts);
 var red = redis.createClient(redisOpts);
 
 
-var minecraft = new Minecraft.Minecraft();
+
 
 
 
@@ -52,67 +52,78 @@ var Observer = function(msg) {
     
     this.running = false;
     this.ready = false;
+
 }
+
 
 Observer.prototype.init = function init() {
-// subscribe to redis and react to messages
-    redSub.subscribe('mcsh');
-    redSub.on("message", onMessage);
-}
+    var self = this;
 
-var onMessage = function onMessage (channel, message) {
-    
-    console.log('got message=' + message + ' on channel=' + channel); 
-    
-    if (channel != 'mcsh') {
-	console.log('channel was not mcsh');
-	return;
-    }
-    
-    if (message == 'observer') {
-	console.log('got redis observer message');
 
-	// start minecraft
-	//minecraft.start(function(err, ok) {});
-
-	minecraft.start();
-	minecraft.on('ready', function() {
-	    // get job
-	    //        mcsh:observer:queue
-	    red.lpop('mcsh:observer:queue', function(err, job) {
-		if (err) throw err;
-		if (!job) return that.cb(new Error('there is no observer job in the queue'));
+    self.makeReady(function(err) {
+	if (err) throw new Error('error when making ready- ' + err);
+	
+	// subscribe to redis and react to messages
+	console.log('subbing to redis');
+	redSub.subscribe('mcsh');
+	redSub.on("message", function(channel, message) {
+	    
+	    console.log('got message=' + message + ' on channel=' + channel); 
+	    
+	    if (channel != 'mcsh') {
+		console.log('channel was not mcsh');
+		return;
+	    }
+	    
+	    
+	    if (message == 'observer') {
+		console.log('got redis observer message');
 		
-		// do job
-		console.log('job=' + job);
-		job = job.split(' ');
-		var action = job[0];
-		var id = job[1];
+		// start minecraft
+		//minecraft.start(function(err, ok) {});
 		
-		
-		if (action == 'screenshot') {
-		    input.takeScreenshot(function(err, imgPath) {
+		minecraft.start(function(err) {
+		    if (err) throw err;
+		    console.log('minecraft started');
+		    // get job
+		    //        mcsh:observer:queue
+		    red.lpop('mcsh:observer:queue', function(err, job) {
 			if (err) throw err;
+			if (!job) return that.cb(new Error('there is no observer job in the queue'));
 			
-			// get image on disk and turn it into data suitable to write to redis
-			util.encodeImage(imgPath, function(err, imgData) {
-			    if (err) throw err;
+			// do job
+			console.log('job=' + job);
+			job = job.split(' ');
+			var action = job[0];
+			var id = job[1];
+			
+			
+			if (action == 'screenshot') {
+			    input.takeScreenshot(function(err, imgPath) {
+				if (err) throw err;
+				
+				// get image on disk and turn it into data suitable to write to redis
+				util.encodeImage(imgPath, function(err, imgData) {
+				    if (err) throw err;
+				    
+				    redPub.rpush('mcsh:observer:screenshot:' + idd, imgData);
+				    
+				    console.log('screenshot done');
+				});
+			    });
 			    
-			    redPub.rpush('mcsh:observer:screenshot:' + idd, imgData);
-			    
-			    console.log('screenshot done');
-			});
+			}
+			
+			// else if (action == 'say') {
+			
+			// }
 		    });
-		    
-		}
-		
-		// else if (action == 'say') {
-		
-		// }
-	    });
+		});
+	    }
 	});
-    }
+    });
 }
+	      
     
 
 
@@ -183,8 +194,8 @@ Observer.prototype.makeReady = function makeReady(cb) {
 	    if (err) return cb(new Error('minecraft had an error when making ready- ' + err));
 
 	    self.ready = true;
-	    // wait for message from minecraft server
-	    console.log('listening for redis messages');
+
+	    return cb(null);
 
 	});	
     }

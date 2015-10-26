@@ -20,7 +20,6 @@ var mcToForeground = function mcToForeground(cb) {
 
     wmctrl.on('error', function(err) {
 	if (err) return cb(err);
-	
     });
 
     wmctrl.on('close', function(code, signal) {

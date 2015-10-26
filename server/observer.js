@@ -30,11 +30,7 @@ var redPub = redis.createClient(redisOpts);
  */
 var takeScreenshot = function(cb) {
     console.log('observer.js: takeScreenshot');
-    redPub.rpush('mcsh:observer:queue', 'screenshot', function(err, reply) {
-	if (err) throw err;
-	redPub.publish('mcsh', 'observer');
-	return cb(null);
-    });
+    comms.job('screenshot');
 }
 
 

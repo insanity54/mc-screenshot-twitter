@@ -4,17 +4,22 @@ nconf.file(path.join(__dirname, '..', 'config.json'));
 
 var fs = require('fs');
 var minecraft = require('minecraft-control');
-var tweet = require('./tweeter');
+var tweet = require(path.join(__dirname, 'tweeter'));
+var comms = require(path.join(__dirname, 'comms'));
 
 
 var serverPath = nconf.get('minecraft_server_jar_path');
 var worldPath = nconf.get('minecraft_server_world_path');
-var observerName = nconf.get('minecraft_observer_username');
+var observerName = nconf.get('minecraft_observer_name');
 
 
 if (typeof(serverPath) === 'undefined') throw new Error('minecraft server path not defined in config.json');
 if (typeof(worldPath) === 'undefined') throw new Error('minecraft world path not defined in config.json');
-if (typeof(observerName) === 'undefined') throw new Error('minecraft observer username not defined in config.json');
+if (typeof(observerName) === 'undefined') throw new Error('minecraft observer name (minecraft_observer_name) not defined in config.json');
+//if (typeof(redisOpts) === 'undefined') throw new Error('redis client options not defined in config.json')
+//
+//var redPub = redis.createClient(redisOpts);
+
 
 //console.log('serverPath=' + serverPath);
 //console.log('worldPath=' + worldPath);
@@ -34,18 +39,28 @@ var startServer = function(cb) {
 
     
     game.start(function(loadtime) {
-	console.log('Server started in ' + loadtime + ' seconds');
+        console.log('Server started in ' + loadtime + ' seconds');
 
-	// register a thingy
-	game.on('said', function(player, said) {
-	    console.log(player + ' said ' + said);
+        // register a thingy
+        game.on('said', function(player, said) {
+            console.log(player + ' said ' + said);
 
-	    if (said[0] === '!') {
-		// we got a command
-	    }
-	});
-	
-	return cb(null);	
+            if (said[0] === '!') {
+            // we got a command
+            }
+        });
+        
+        game.on('joined', function(player) {
+            // if the player that joined is our observer, send a message to the observer that it has successfully joined
+            if (player == observerName) {
+                console.log('!!! observer joined');
+                comms.pub('joined', function(err) {
+                    if (err) throw err;
+                });
+            }
+        });
+
+        return cb(null);
     });
 }
 
@@ -61,18 +76,18 @@ var moveObserver = function(targetPlayer, cb) {
     // if target player is not defined but callback is
     if (typeof(targetPlayer) === 'undefined' && typeof(cb) === 'function') {
 
-	// since no player specified, get a random player if there are any logged in
-	if (game.players.length < 1) {
-	    console.log('no players logged in');
-	    // no players logged in so dont move player after all
-	    return cb(null);
-	}
+        // since no player specified, get a random player if there are any logged in
+        if (game.players.length < 1) {
+            console.log('no players logged in');
+            // no players logged in so dont move player after all
+            return cb(null);
+        }
 
-	else {
-	    var randomIndex = Math.floor(Math.random() * game.players.length);
-	    targetPlayer = game.players[randomIndex];
-	    console.log('moving observer to random player ' + targetPlayer);
-	}
+        else {
+            var randomIndex = Math.floor(Math.random() * game.players.length);
+            targetPlayer = game.players[randomIndex];
+            console.log('moving observer to random player ' + targetPlayer);
+        }
     }
 
     game.sendCommand('tp ' + observerName + ' ' + targetPlayer);
@@ -82,12 +97,12 @@ var moveObserver = function(targetPlayer, cb) {
 
 var stopServer = function(cb) {
     if (!game.running) {
-	console.error('server is not running');
-	return cb(null);
+        console.error('server is not running');
+        return cb(null);
     }
     
     game.stop(function() {
-	return cb(null);
+	   return cb(null);
     });
 }
 
