@@ -12,7 +12,15 @@ var util = require('util');
 var events = require('events');
 
 var child_process = require('child_process');
-var redis = require('redis').createClient(nconf.get('redis_client_options'));
+var redis = require('redis');
+
+
+var redisOpts = nconf.get('redis_client_options');
+if (typeof(redisOpts) === 'undefined') throw new Error('redis options are undefined in config.json');
+
+
+var redPub = redis.createClient(redisOpts);
+
 
 
 /**
@@ -21,9 +29,10 @@ var redis = require('redis').createClient(nconf.get('redis_client_options'));
  * tells the observer there is work to do
  */
 var takeScreenshot = function(cb) {
-    redis.rpush('mcsh:observer:queue', 'screenshot', function(err, reply) {
+    console.log('observer.js: takeScreenshot');
+    redPub.rpush('mcsh:observer:queue', 'screenshot', function(err, reply) {
 	if (err) throw err;
-	redis.publish('mcsh', 'observer');
+	redPub.publish('mcsh', 'observer');
 	return cb(null);
     });
 }
