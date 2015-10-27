@@ -27,15 +27,6 @@ assert.isDefined(redisOpts, 'no redis_client_options was in config.json');
 
 
 
-// set up redis clients for publishing, subscribing, and getting job data
-var redSub = redis.createClient(redisOpts);
-var redPub = redis.createClient(redisOpts);
-var red = redis.createClient(redisOpts);
-redSub.subscribe('mcsh');
-
-
-
-
 
 
 
@@ -52,51 +43,34 @@ ygg.auth({
     console.log(data);
     nconf.set('minecraft_observer_auth', data);
     nconf.save();
-    
-    
-    // wait for message from server
-    redSub.on('message', function(chan, msg) {
-        console.log('message GET');
-
-	if (chan === 'observer') {
-
-
-	    // server is telling us we have a job
-	    if (msg === 'job') {
-		// get job type
-		red.lrange('mcsh:observer:queue', 0, 0, function(err, task) {
-		    assert.isNull(err, 'redis err');
-		    console.log('queued job is:' + task);
-		    
-		    if (task === 'screenshot') {
-			
-			// start minecraft (only allow 1 instance)
-			if (!minecraft.isRunning) {
-			    minecraft.isRunning = true;
-			    minecraft.start(username, data.accessToken, function(err, info) {
-				// once started
-				//minecraft.isRunning = false;
-			    });
-			}
-			
-		    }
-		});
-	    }
-
-
-	    // server is telling us we successfully joined
-	    if (msg === 'joined') {
-		input.say('Camera man at your service!', function(err) {
-		    if (err) throw err;
-		});
-
-		
-
-	    }
-
-	}
-
-
-	
-    });
 });
+
+
+var makeReady(err, cb) {
+
+    // see if token we have is good
+    ygg.validate(accessToken, function(isValid, err) {
+	console.log('validation complete. your key isIalid? ' + isValid); 
+	if (err) throw err;
+	if (isValid) return cb(null);
+
+	// refresh token if not good
+	ygg.refresh(accessToken, clientToken, function(err, newAccessToken, res) {
+	    console.log('refresh complete. your new access token is ' + newAccessToken);
+	    console.log(res);
+	    if (err) throw err;
+
+	    var authData = nconf.get('minecraft_observer_auth');
+	    authData.accessToken(newAccessToken);
+	    nconf.set('minecraft_observer_auth', authData);
+	    nconf.save();
+
+	    return cb(null);
+	});
+    });
+}
+
+
+module.exports = {
+    makeReady: makeReady
+}
