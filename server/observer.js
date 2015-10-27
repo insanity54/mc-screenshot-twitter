@@ -10,6 +10,7 @@ nconf.file(path.join(__dirname, '..', 'config.json'));
 
 var util = require('util');
 var events = require('events');
+var comms = require(path.join(__dirname, 'comms'));
 
 var child_process = require('child_process');
 var redis = require('redis');
@@ -30,7 +31,10 @@ var redPub = redis.createClient(redisOpts);
  */
 var takeScreenshot = function(cb) {
     console.log('observer.js: takeScreenshot');
-    comms.job('screenshot');
+    comms.job('screenshot', function(err) {
+        if (err) throw err;
+	return cb(null);
+    });
 }
 
 

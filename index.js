@@ -41,6 +41,7 @@ vorpal
 		cb(err)
 	    }
 
+	    console.log('delegating to observer to take snapshot');
 	    observer.takeSnapshot(function(err, imgData) {
 		if (err) cb(new Error('problem while telling the observer to take a snapshot'));
 		cb();
