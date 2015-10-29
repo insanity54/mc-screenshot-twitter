@@ -46,7 +46,7 @@ ygg.auth({
 });
 
 
-var makeReady(err, cb) {
+var makeReady = function makeReady(err, cb) {
 
     // see if token we have is good
     ygg.validate(accessToken, function(isValid, err) {

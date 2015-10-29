@@ -22,3 +22,4 @@ libxtst-dev libpng-dev  (for robotjs, automates keyboard events in minecraft cli
 * redis_client_options {object}
 * minecraft_server_jar_path {string}
 * minecraft_server_world_path {string}
+* minecraft_observer_screenshot_directory {string}
