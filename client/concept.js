@@ -36,7 +36,7 @@
        pseudo-code
 
          // each of these steps needs a timeout
-       
+	 
          async.series([
            yggdrasil.makeReady,
 	   minecraft.start,
@@ -59,10 +59,15 @@
 
 
 
-var series = require('async').series;
-var auth = require('
+var async = require('async');
+var path = require('path');
+var auth = require(path.join(__dirname, 'auth'));
 
 
-series([
-    auth.makeReady
+async.series([
+    auth.makeReady,
+    minecraft.start,
+    minecraft.waitForTp,
+    input.takeScreenshot,
+    util.uploadScreenshot
 ]);
