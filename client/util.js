@@ -23,6 +23,8 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
     fs.readdir(getScreenshotDirectory(), function(err, screenshots) {
         if (err) throw err;
 
+        console.log('screenshots');
+        console.log(screenshots);
         var ssMap = {};
 
         // get absolute path to the screenshot
@@ -52,11 +54,12 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
 
         // get the final array of files
         var results = ssMap.map(function(ss) {
+            //console.log(screenshots[ss.index]);
             return screenshots[ss.index];
         });
 
         // the last arrey element will be the most recent
-//        console.log(results);
+        console.log(results);
 //        console.log('most recent - ' + results[results.length-1])
         return cb(null, results[results.length-1]);
     });
@@ -75,7 +78,7 @@ var uploadScreenshot = function uploadScreenshot(cb) {
     var red = redis.createClient(redisOpts);
 
     getLatestScreenshot(function(err, latest) {
-        //console.log('latest ss is ' + latest);
+        console.log('latest ss is ' + latest);
         
         // read screenshot file
         fs.readFile(latest, { encoding: 'base64' }, function(err, data) {

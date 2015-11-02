@@ -39,11 +39,12 @@ var mcToForeground = function mcToForeground(cb) {
 var takeSnapshot = function takeSnapshot(cb) {
     //if (!game.ready) return cb(new Error('minecraft client was not ready when tried to takeSnapshot'));
     
+    console.log('taking screenshot');
     mcToForeground(function(err) {
-	if (err) return cb(new Error('problem moving minecraft client to foreground- ' + err));
-	//robot.keyTap('f3');
-	var filename = null;
-	return cb(null, filename);
+        if (err) return cb(new Error('problem moving minecraft client to foreground- ' + err));
+        //robot.keyTap('f3');
+        var filename = null;
+        return cb(null, filename);
     });
 }
 /**
