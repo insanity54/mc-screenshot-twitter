@@ -105,5 +105,3 @@ module.exports = {
     getLatestScreenshot: getLatestScreenshot,
     uploadScreenshot: uploadScreenshot
 }
-
-uploadScreenshot();

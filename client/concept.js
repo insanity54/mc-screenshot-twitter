@@ -73,4 +73,7 @@ async.series([
     minecraft.waitForTp,
     input.takeScreenshot,
     util.uploadScreenshot
-]);
+], function(err, results) {
+    if (err) throw err;
+    console.log('async.series finished without error');
+});
