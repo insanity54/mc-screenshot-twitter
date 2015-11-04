@@ -4,7 +4,7 @@ var path = require('path');
 var nconf = require('nconf');
 var redis = require('redis');
 
-nconf.file(path.join(__dirname, '..', 'config.json'));
+nconf.file(path.join(__dirname, '..', '..', config.json'));
 var redisOpts = nconf.get('redis_client_options');
 
 if (typeof(redisOpts) === 'undefined') throw new Error('redis client options not defined in config.json')
