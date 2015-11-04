@@ -4,7 +4,7 @@ nconf.file(path.join(__dirname, '..', '..', 'config.json'));
 
 var fs = require('fs');
 var minecraft = require('minecraft-control');
-var tweet = require(path.join(__dirname, '..', 'cores', 'tweeter'));
+var tweet = require(path.join(__dirname, '..', 'wraps', 'tweeter'));
 var comms = require(path.join(__dirname, 'comms'));
 
 
