@@ -1,10 +1,8 @@
 var path = require('path');
 var ygg = require('yggdrasil')({});
 var nconf = require('nconf')
-nconf.file(path.join('..', 'config.json'))
+nconf.file(path.join(__dirname, '..', 'config.json'))
 var assert = require('chai').assert;
-var minecraft = require(path.join(__dirname, 'minecraftRedux.nogit'));
-var redis = require('redis');
 
 
 
@@ -16,12 +14,13 @@ if (typeof (authData) !== 'undefined') {
 }
 var password = nconf.get('minecraft_observer_password');
 var username = nconf.get('minecraft_observer_username');
-var redisOpts = nconf.get('redis_client_options');
+//var redisOpts = nconf.get('redis_client_options');
 
 // confirm all necessary values were pulled from config
 assert.isDefined(password);
 assert.isDefined(username);
-assert.isDefined(redisOpts, 'no redis_client_options was in config.json');
+assert.isDefined(clientToken);
+//assert.isDefined(redisOpts, 'no redis_client_options was in config.json');
 
 
 
@@ -89,7 +88,7 @@ var makeReady = function makeReady(cb) {
         pass: password //Password
     }, function (err, data) {
         if (err) throw err;
-        console.log('logged in with data- ' + data);
+        //console.log('logged in with data- ' + data);
         console.log(data);
 
         

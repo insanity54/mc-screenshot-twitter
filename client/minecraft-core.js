@@ -101,6 +101,9 @@ Game.prototype.start = function start(cb) {
     stdoutRl.on('line', function (line) {
         self.handleLine(line);
     });
+    
+    // when a "Connecting" message is seen in stdout, consider minecraft started
+    
 
     //return cb(null);
     //
@@ -136,6 +139,7 @@ Game.prototype.start = function start(cb) {
 
 var messageParser = /^\[(\d+):(\d+):(\d+)\]\s+\[([^\/\]]+)\/([^\]]+)\]:\s(.*)$/
 var specialMessageHandlers = {
+    // client untested
     start: {
         regex: /^Done \(([\d\.]+)s\)\! For help, type "help" or "\?"/,
         callback: function (game, message, match) {
@@ -144,6 +148,7 @@ var specialMessageHandlers = {
             game.emit('start', parseFloat(match[1]));
         }
     },
+    // client untested
     joined: {
         regex: /^(\S+) joined the game/,
         callback: function (game, message, match) {
@@ -152,6 +157,7 @@ var specialMessageHandlers = {
             game.emit('joined', player);
         }
     },
+    // client untested
     left: {
         regex: /^(\S+) left the game/,
         callback: function (game, message, match) {
@@ -160,6 +166,37 @@ var specialMessageHandlers = {
             game.emit('left', player);
         }
     },
+    // client tested
+    connecting: {
+        regex: /^Connecting to (\S+), (\S+)/,
+        callback: function(game, message, match) {
+            var address = match[1];
+            var port = match[2];
+            //console.log('connecting callback !!!!!!!!! server=' + address + ' ' + 'port=' + port);
+            game.emit('connecting', address, port);
+        }
+    },
+    // client tested
+    chat: {
+        regex: /^\[CHAT\] <([^>]+)> (.*)$/,
+        callback: function(game, message, match) {
+            var from = match[1];
+            var message = match[2];
+            //console.log('chat callback!!!! from ' + from + ' message ' + message);
+            game.emit('chat', from, message);
+        }
+    },
+    // client tested
+    teleport: {
+        regex: /^\[CHAT\] \[Server: Teleported (\S+) to (\S+)\]$/,
+        callback: function(game, message, match) {
+            var player = match[1];
+            var target = match[2];
+            //console.log('teleporting callback!!!!!!! player=' + player + ' target=' + target);
+            game.emit('teleport', player, target);
+        }
+    },
+    // client untested
     lostConnection: {
         regex: /^(\S+) lost connection/,
         callback: function (game, message, match) {
@@ -168,6 +205,7 @@ var specialMessageHandlers = {
             game.emit('lostConnection', player);
         }
     },
+    // client untested
     said: {
         regex: /^<([^>]+)> (.*)$/,
         callback: function (game, message, match) {
@@ -176,6 +214,7 @@ var specialMessageHandlers = {
             game.emit('said', player, said);
         }
     },
+    // client untested
     action: {
         regex: /^\* (\S+) (.*)$/,
         callback: function (game, message, match) {
@@ -184,6 +223,7 @@ var specialMessageHandlers = {
             game.emit('action', player, action);
         }
     },
+    // client untested
     earnedAchievement: {
         regex: /^(\S+) has just earned the achievement \[([^\]]+)\]/,
         callback: function (game, message, match) {
@@ -193,6 +233,7 @@ var specialMessageHandlers = {
             game.emit('earnedAchievement', player, achievement);
         }
     },
+    // client untested
     died: {
         regex: /^(\S+) (.*)$/,
         callback: function (game, message, match) {
@@ -243,8 +284,10 @@ Game.prototype.handleLine = function handleLine(line) {
         }
 
         self.emit('message', message);
-
-        // to through each special message handler
+        //console.log('MESSAGE-');
+        //console.log(message);
+        
+        // go through each special message handler
         // match message against that handler's regex
         // if message matched that handler
         // use that handler's callback function to send an appropriate event

@@ -18,8 +18,9 @@ var game = new Minecraft.Game();
 
 
 var start = function start(cb) {
-    game.start(function(loadtime){
-        console.log("minecraft client started");
+    game.start();
+    game.on('connecting', function(server, port) {
+        console.log('minecraft is connecting to server=' + server + ' port=' + port);
         return cb(null);
     });
 }
@@ -28,14 +29,6 @@ var start = function start(cb) {
 var stop = function stop(cb) {
     game.stop(function() {
         console.log('minecraft client stopped');
-        return cb(null);
-    });
-}
-
-
-var stop = function stop(cb) {
-    game.stop(function(){
-        console.log("server stopped");
         return cb(null);
     });
 }
@@ -56,7 +49,7 @@ var waitForTeleport = function waitForTeleport(cb) {
     });
     console.log(game.listeners('teleport'));
     
-    // time out if 10 seconds elapsed without teleport
+    // time out if 20 seconds elapsed without teleport
     var timeout = function timeout() {
         function onListenerRemoved(err) {
             console.log("removed teleport listener");
@@ -67,7 +60,7 @@ var waitForTeleport = function waitForTeleport(cb) {
         console.log('timed out waiting for teleport.');
         game.removeListener('teleport', onListenerRemoved);
     }
-    var timeoutTimer = setTimeout(timeout, 10000); // 10 seconds
+    var timeoutTimer = setTimeout(timeout, 20000); // 20 seconds
     
 
     

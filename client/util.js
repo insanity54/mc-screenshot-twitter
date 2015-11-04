@@ -4,6 +4,7 @@ var nconf = require('nconf');
 var redis = require('redis');
 var fs = require('fs');
 var moment = require('moment');
+var saw = require('saw');
 nconf.file(path.join(__dirname, '..', 'config.json'));
 
 var ssDir = nconf.get('minecraft_observer_screenshot_directory')
@@ -13,7 +14,7 @@ if (typeof(redisOpts) === 'undefined') throw new Error('redis options are undefi
 
 
 /**
- * getLatestScreensht
+ * getLatestScreenshot
  *
  * gets the latest screenshot
  *
@@ -23,8 +24,8 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
     fs.readdir(getScreenshotDirectory(), function(err, screenshots) {
         if (err) throw err;
 
-        console.log('screenshots');
-        console.log(screenshots);
+        //console.log('screenshots');
+        //console.log(screenshots);
         var ssMap = {};
 
         // get absolute path to the screenshot
@@ -73,26 +74,105 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
  */
 
 
+/**
+ * uploadScreenshot
+ *
+ * uploads screenshot given it's path, or if path not defined, uploads the latest screenshot
+ *
+ * @param {string} path - path to screenshot to upload
+ * @param {onUploadedScreenshotCallback} cb
+ */
+var uploadScreenshot = function uploadScreenshot(path, cb) {
+    
+    if (typeof(path) === 'undefined')
+        // path is undefined, problem for sure
+        throw new Error('uploadScreenshot requires the first parameter to be a path to a screenshot or a callback. (it was undefined)');
+    
+    if (typeof(cb) === 'undefined' && typeof(path) === 'function') {
+        // cb is undefined, assume path is cb
 
-var uploadScreenshot = function uploadScreenshot(cb) {
-    var red = redis.createClient(redisOpts);
-
-    getLatestScreenshot(function(err, latest) {
-        console.log('latest ss is ' + latest);
-        
-        // read screenshot file
-        fs.readFile(latest, { encoding: 'base64' }, function(err, data) {
+        cb = path;
+        // make path the latest screenshot
+        getLatestScreenshot(function(err, latest) {
             if (err) throw err;
-            //fs.writeFileSync(path.join(__dirname, 'testimg.b64'), data); // test image
             
-            red.rpush('mcsh:observer:screenshots', data, function(err) {
-                if (err) throw err;
-                red.end();
-                console.log('screenshot uploaded');
-            });
+            _uploadScreenshot(latest, function(err) {
+                if (err) return cb(err);
+                return cb(null);
+            })
+        });
+    }
+    
+    else {
+        // path and cb were both defined
+        _uploadScreenshot(path, function(err) {
+            if (err) return cb(err);
+            return cb(null);
+        });
+    }
+
+}
+/**
+ * onUploadedScreenshotCallback
+ *
+ * @callback {onUploadedScreenshotCallback}
+ * @param {error} err
+ */
+
+
+/**
+ * _uploadScreenshot
+ *
+ * uploads screenshot given its path
+ *
+ * @param {string} path - path to ss to upoad
+ * @param {_onUploadedScreenshotCallback} cb
+ */
+var _uploadScreenshot = function _uploadScreenshot(path, cb) {
+    var red = redis.createClient(redisOpts);
+    fs.readFile(path, { encoding: 'base64' }, function(err, data) {
+        if (err) throw err;
+        //fs.writeFileSync(path.join(__dirname, 'testimg.b64'), data); // test image
+
+        red.rpush('mcsh:observer:screenshots', data, function(err) {
+            if (err) throw err;
+            red.end();
+            console.log('screenshot uploaded');
+            return cb(null);
         });
     });
 }
+/**
+ * _onUploadedScreenshotCallback
+ *
+ * @callback {_onUploadedScreenshotCallback}
+ * @param {error} err
+ */
+
+
+/**
+ * waitForNewScreenshot
+ *
+ * watches the screenshot directory. when a new file is added,
+ * calls back with the new file's path
+ *
+ * @param {onNewScreenshot} cb
+ */
+var waitForNewScreenshot = function waitForNewScreenshot(cb) {
+    var watch = saw(getScreenshotDirectory());
+    watch.once('add', function (file) {
+        //console.log('new screenshot detected. file=' + file.fullPath);
+        watch.close();
+        return cb(null, file.fullPath);
+    });
+}
+/**
+ * onNewScreenshot
+ *
+ * @callback {onNewScreenshot}
+ * @param {error} err
+ * @param {string} path - the path to the new screenshot
+ */
 
 
 var getScreenshotDirectory = function getScreenshotDirectory() {
@@ -102,6 +182,7 @@ var getScreenshotDirectory = function getScreenshotDirectory() {
 
 
 module.exports = {
+    waitForNewScreenshot: waitForNewScreenshot,
     getLatestScreenshot: getLatestScreenshot,
     uploadScreenshot: uploadScreenshot
 }

@@ -6,17 +6,16 @@ var path = require('path');
 var nconf = require('nconf');
 nconf.file(path.join(__dirname, '..', 'config.json'));
 
-var util = require('util');
+var util = require(path.join(__dirname, 'util'));
 var events = require('events');
-//var robot = require('robotjs');
+var robot = require('robotjs');
 var child_process = require('child_process');
-var redis = require('redis').createClient(nconf.get('redis_client_options'));
 
 
 
 
 var mcToForeground = function mcToForeground(cb) {
-    var wmctrl = child_process.spawn('wmctrl', ['-Fxa', 'sun-awt-X11-XFramePeer.net-minecraft-bootstrap-Bootstrap']);
+    var wmctrl = child_process.spawn('wmctrl', ['-a', 'Minecraft ']);
 
     wmctrl.on('error', function(err) {
 	if (err) return cb(err);
@@ -42,9 +41,13 @@ var takeSnapshot = function takeSnapshot(cb) {
     console.log('taking screenshot');
     mcToForeground(function(err) {
         if (err) return cb(new Error('problem moving minecraft client to foreground- ' + err));
-        //robot.keyTap('f3');
-        var filename = null;
-        return cb(null, filename);
+        robot.keyTap('f2'); // take the screenshot in-game
+        
+        // wait a couple seconds for the screenshot to process and save
+        util.waitForNewScreenshot(function(err, path) {
+            if (err) return cb(err);
+            return cb(null, path);
+        });
     });
 }
 /**
