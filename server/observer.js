@@ -10,7 +10,7 @@ nconf.file(path.join(__dirname, '..', 'config.json'));
 
 var util = require('util');
 var events = require('events');
-var comms = require(path.join(__dirname, 'comms'));
+var comms = require(path.join(__dirname, 'wraps', 'comms'));
 
 var child_process = require('child_process');
 var redis = require('redis');
