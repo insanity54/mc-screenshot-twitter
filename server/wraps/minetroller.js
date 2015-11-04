@@ -4,7 +4,7 @@ nconf.file(path.join(__dirname, '..', 'config.json'));
 
 var fs = require('fs');
 var minecraft = require('minecraft-control');
-var tweet = require(path.join(__dirname, 'tweeter'));
+var tweet = require(path.join(__dirname, 'cores', 'tweeter'));
 var comms = require(path.join(__dirname, 'comms'));
 
 
@@ -17,7 +17,6 @@ if (typeof(serverPath) === 'undefined') throw new Error('minecraft server path n
 if (typeof(worldPath) === 'undefined') throw new Error('minecraft world path not defined in config.json');
 if (typeof(observerName) === 'undefined') throw new Error('minecraft observer name (minecraft_observer_name) not defined in config.json');
 //if (typeof(redisOpts) === 'undefined') throw new Error('redis client options not defined in config.json')
-//
 //var redPub = redis.createClient(redisOpts);
 
 
@@ -29,26 +28,18 @@ var game = new minecraft.Game({
 });
 
 
-
 var startServer = function(cb) {
     // var eulaPath = path.resolve(serverPath, '..', 'eula.txt');
     // var eula = fs.readFileSync(eulaPath);
 
     // console.log('eulapath- ' + eulaPath);
     // if (!eula) fs.createFileSync(eulaPath, 'eula=true');
-
     
     game.start(function(loadtime) {
         console.log('Server started in ' + loadtime + ' seconds');
 
-        // register a thingy
-        game.on('said', function(player, said) {
-            console.log(player + ' said ' + said);
-
-            if (said[0] === '!') {
-            // we got a command
-            }
-        });
+        // when something is said in chat, defer to our chat handling module
+        game.on('said', chat.handleLine);
         
         game.on('joined', function(player) {
             // if the player that joined is our observer, send a message to the observer that it has successfully joined
@@ -59,7 +50,7 @@ var startServer = function(cb) {
                 });
             }
         });
-
+        
         return cb(null);
     });
 }
@@ -109,19 +100,11 @@ var stopServer = function(cb) {
 
 
 
-
-
-
-
 module.exports = {
     start: startServer,
     stop: stopServer,
     startServer: startServer,
     stopServer: stopServer,
     moveObserver: moveObserver
-}
-
-
-
-    
+}   
     
