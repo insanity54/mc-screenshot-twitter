@@ -61,9 +61,11 @@ var create = function create(type, player, params) {
           red.close();
         }
       });
-    } 
+    });
   });
 }
+  
+
 
  
 module.exports = {
