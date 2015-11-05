@@ -34,7 +34,7 @@ var handleJoin = function(player, game) {
 	// get the oldest queued job details
 	red.LRANGE('mcsh:observer:queue', 0, 0, function(err, jobs) {
 		if (err) return console.error('error when getting job queue- ' + err);
-		if (typeof(jobs) === 'Array') {
+		if (typeof(jobs) !== 'undefined') {
 			var j = jobs[0].split(',');
 			var type = j[0];
 			var id = j[1];
@@ -53,7 +53,7 @@ var handleJoin = function(player, game) {
 				});
 			}
 		}
-		else console.error('handlejoin got something other than an array, so ignoring- ' + jobs);
+		else console.error('handlejoin an undefined job queue, so ignoring- ' + jobs);
 	});
 }
 
