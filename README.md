@@ -97,20 +97,21 @@ just use `npm start` or `node index` and it's an interactive shell
   * screenshot player added to redis  (SET mcsh:screenshot:{{id}}:player  {{player}})
   * screenshot time added to redis    (SET mcsh:screenshot:{{id}}:time    {{time}})
   * job notification published to observer channel in redis (PUBLISH observer job)
-* [ ] server waits for observer to join
+* [x] server waits for observer to join
   * 'join' listener type added in ./server/wraps/minetroller.js
-* [ ] observer hears redis publication
+* [x] observer hears redis publication
   * observer is subscribed to redis observer channel and sees job notif
   * observer checks redis for job deets
     * LRANGE mcsh:observer:queue 0 0
     * GET mcsh:screenshot:{{id}}:player
     * GET mcsh:screenshot:{{id}}:message
-* [ ] observer joins server
+* [x] observer joins server
   * observer authenticates using yggdrasil
   * observer starts up minecraft client & connects to server using child_process
-* [ ] server sees observer joined 
-  * minecraft-control emits 'join' event, minetroller responds
-* [ ] server checks the active job type
+* [x] server sees observer joined 
+  * server checks the active job type
+  * if active job type is screenshot, tp observer to requesting player
+* [x] server checks the active job type
   * in redis (LRANGE mcsh:observer:queue 0 0)
   * GET mcsh:screenshot:{{id}}:player
   * GET mcsh:screenshot:{{id}}:message
@@ -118,7 +119,7 @@ just use `npm start` or `node index` and it's an interactive shell
   * teleport observer to requesting player
   * observer takes screenshot
   * observer uploads screenshot to redis
-  * observer removes job from queue and notifies server that it's done
-    * LPOP mcsh:observer:queue
-    * PUBLISH observer done
+  * [ ] observer removes job from queue and notifies server that it's done
+    * [x] LPOP mcsh:observer:queue
+    * [x] PUBLISH observer done
 
