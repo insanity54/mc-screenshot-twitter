@@ -1,16 +1,38 @@
-# MC Shitter
+# mcsh
 
-just use node index and it's an interactive shell
+A minecraft server wrapper that integrates with twitter.
+
+## Features
+
+* in-game tweets
+* in-game tweeted screenshots
+
+## How it works
+
+In game, a player sends a command using the chat. Commands are prefixed with an exclamation mark (!). Commands are similar to CLI commands, sometimes with optional parameters, and are as follows:
+
+`!screenshot (MESSAGE)`
+`!tweet MESSAGE`
+
+## installation
+
+* manually install and run redis (check https://redis.io for tut)
+* `npm install`
+
+## running
+
+just use `npm start` or `node index` and it's an interactive shell
+
 
 
 
 ## dependencies
 
+linux
+redis (handles communication between server & observer)
 minecraft server
 minecraft client (can be on the same computer as server assuming server has X window manager)
-
 xdotool (brings minecraft to foreground)
-
 libxtst-dev libpng-dev  (for robotjs, automates keyboard events in minecraft client)
 
 
@@ -25,3 +47,31 @@ libxtst-dev libpng-dev  (for robotjs, automates keyboard events in minecraft cli
 * minecraft_observer_screenshot_directory {string}
 * minecraft_observer_server_address {string}
 * minecraft_observer_server_port {string}
+* 
+
+
+
+## Brainstorming
+
+### server side
+
+#### screenshot command
+
+* mcsh receives `!screenshot` command from player
+* mcsh creates screenshot job on server, notifies observer
+  * observer screenshot job added to redis (RPUSH mcsh:observer:queue screenshot)
+  * job notification published to observer channel in redis (PUBLISH observer job)
+* observer hears redis publication
+  * observer is subscribed to redis observer channel and sees job notif
+  * observer checks redis for job type (LPOP mcsh:observer:queue)
+* observer joins server
+  * observer authenticates using yggdrasil
+  * observer starts up minecraft client & connects to server using child_process
+* server waits for 
+  * wait for observer to join the server
+  * teleport observer to requesting player
+  * observer takes screenshot
+  * observer uploads screenshot to redis
+  * observer notifies server that it's done
+  * 
+
