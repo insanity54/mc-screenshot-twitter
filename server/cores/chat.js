@@ -1,5 +1,6 @@
 var path = require('path');
 var _ = require('underscore');
+var job = require(path.join(__dirname, 'job'));
 
 
 
@@ -14,7 +15,6 @@ var commandHandlers = {
         regex: /^ *!(snapshot|screenshot|ss) *(.*)$/i,
         callback: function(player, match) {
             var message = match[2];
-            
         }
     },
     tweet: {
@@ -35,16 +35,17 @@ var commandHandlers = {
  * handleLine
  */
 var handleLine = function handleLine(player, said) {
-    console.log('handlingLine! ' + player + ' said ' + said);
+    //console.log('handlingLine! ' + player + ' said ' + said);
     var knownCommand = false;
 
     _.values(commandHandlers).forEach(function (handler) {
         var match = handler.regex.exec(said);
         var handled = false;
         if (match) {
+	    console.log('match! ' + player + ' match=' + match);
             handled = handler.callback(player, match);
         }
-        if (handled == false) {
+        if (handled != false) {
             knownCommand = true;
         }
     });
