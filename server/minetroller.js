@@ -7,6 +7,8 @@ var minecraft = require('minecraft-control');
 var tweet = require(path.join(__dirname, 'tweeter'));
 var comms = require(path.join(__dirname, 'comms'));
 var chat = require(path.join(__dirname, 'chat'));
+var observer = require(path.join(__dirname, 'observer'));
+
 
 var serverPath = nconf.get('minecraft_server_jar_path');
 var worldPath = nconf.get('minecraft_server_world_path');
@@ -28,6 +30,11 @@ var game = new minecraft.Game({
 });
 
 
+var handleJoin = function(player) {
+	if (player == observerName)	observer.handleJoin(player, game);
+}
+
+
 var startServer = function(cb) {
     // var eulaPath = path.resolve(serverPath, '..', 'eula.txt');
     // var eula = fs.readFileSync(eulaPath);
@@ -40,16 +47,9 @@ var startServer = function(cb) {
 
         // when something is said in chat, defer to our chat handling module
         game.on('said', chat.handleLine);
-        
-        game.on('joined', function(player) {
-            // if the player that joined is our observer, send a message to the observer that it has successfully joined
-            if (player == observerName) {
-                console.log('!!! observer joined');
-                comms.pub('joined', function(err) {
-                    if (err) throw err;
-                });
-            }
-        });
+  
+  	// when a player joins, figure out if its an observer and needs further handling
+        game.on('joined', handleJoin);
         
         return cb(null);
     });
