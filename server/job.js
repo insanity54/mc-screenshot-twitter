@@ -8,7 +8,7 @@ var redisOpts = nconf.get('redis_client_options');
 assert.isDefined(redisOpts, 'redis client options not defined in config.json');
 
  
-var cleanUp = function cleanUp() {
+var finalize = function finalize() {
   this.publisher.PUBLISH('observer', 'job');
   this.publisher.end();
   this.red.end();
