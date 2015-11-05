@@ -14,6 +14,17 @@ In game, a player sends a command using the chat. Commands are prefixed with an 
 * `!screenshot (MESSAGE)`
 * `!tweet MESSAGE`
 
+
+## dependencies
+
+* Linux
+* redis (handles communication between server & observer)
+* minecraft server
+* minecraft client (can be on the same computer as server assuming server has X window manager)
+* xdotool (brings minecraft to foreground)
+* libxtst-dev, libpng-dev  (for robotjs, automates keyboard events in minecraft client)
+
+
 ## Setup/Installation
 
 There are two parts to mcShasta. One is the server, which wraps `minecraft_server.jar`, listening to it's events. It also serves a redis server which handles communication between the server and the observer. (redis can run on a separate computer if you like).
@@ -56,15 +67,6 @@ just use `npm start` or `node index` and it's an interactive shell
 
 
 
-
-## dependencies
-
-linux
-redis (handles communication between server & observer)
-minecraft server
-minecraft client (can be on the same computer as server assuming server has X window manager)
-xdotool (brings minecraft to foreground)
-libxtst-dev libpng-dev  (for robotjs, automates keyboard events in minecraft client)
 
 ## config values
 
