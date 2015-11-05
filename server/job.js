@@ -3,7 +3,7 @@ var redis = require('redis');
 var nconf = require('nconf');
 var assert = require('chai').assert;
 var moment = require('moment');
-nconf.file(path.join(__dirname, '..', '..', 'config.json'));
+nconf.file(path.join(__dirname, '..', 'config.json'));
 var redisOpts = nconf.get('redis_client_options');
 assert.isDefined(redisOpts, 'redis client options not defined in config.json');
 

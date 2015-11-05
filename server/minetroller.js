@@ -1,12 +1,12 @@
 var path = require('path');
 var nconf = require('nconf');
-nconf.file(path.join(__dirname, '..', '..', 'config.json'));
+nconf.file(path.join(__dirname, '..', 'config.json'));
 
 var fs = require('fs');
 var minecraft = require('minecraft-control');
 var tweet = require(path.join(__dirname, 'tweeter'));
 var comms = require(path.join(__dirname, 'comms'));
-var chat = require(path.join(__dirname, '..', 'cores', 'chat'));
+var chat = require(path.join(__dirname, 'chat'));
 
 var serverPath = nconf.get('minecraft_server_jar_path');
 var worldPath = nconf.get('minecraft_server_world_path');
