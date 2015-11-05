@@ -6,18 +6,14 @@
 
 var path = require('path');
 var nconf = require('nconf');
-nconf.file(path.join(__dirname, '..', 'config.json'));
-
-var util = require('util');
-var events = require('events');
-var comms = require(path.join(__dirname, 'comms'));
-
-var child_process = require('child_process');
 var redis = require('redis');
+var assert = require('chai').assert;
 
-
+nconf.file(path.join(__dirname, '..', 'config.json'));
+var observerName = nconf.get('minecraft_observer_name');
 var redisOpts = nconf.get('redis_client_options');
-if (typeof(redisOpts) === 'undefined') throw new Error('redis options are undefined in config.json');
+assert.isDefined(redisOpts, 'redis options are undefined in config.json');
+assert.isDefined(observerName, 'observer name is undefined in config.json');
 
 
 
@@ -30,8 +26,9 @@ if (typeof(redisOpts) === 'undefined') throw new Error('redis options are undefi
  * figures out what to do when an observer joins the server
  * 
  * @param {string} player - the observer's name
+ * @param {minecraft-control#Game} game - instance of the running game (minecraft-control module)
  */
-var handleJoin = function(player) {
+var handleJoin = function(player, game) {
 	var red = redis.createClient(redisOpts);
 	
 	// get the oldest queued job details
@@ -51,7 +48,7 @@ var handleJoin = function(player) {
 					
 					// teleport the observer to the target player.
 					// the observer handles the rest of this job
-					teleport(target);
+					teleport(target, game);
 					return
 				});
 			}
@@ -67,9 +64,12 @@ var handleJoin = function(player) {
  * teleports the observer to a player or entity id
  * 
  * @param {string} target - the player or entity id to teleport the observer to
+ * @param {minecraft-control#game} - instance of the running game (minecraft-control module)
  */
-var teleport = function teleport(target) {
-	
+var teleport = function teleport(target, game) {
+	game.sendCommand('tp '+observerName+' '+target, function(err) {
+		console.log('teleport complete')	
+	});
 }
 
 // /**
