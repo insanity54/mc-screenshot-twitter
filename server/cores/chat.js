@@ -22,6 +22,7 @@ var commandHandlers = {
         callback: function(player, match) {
             var from = player;
             var message = match[2];
+	}
     }
 };
 
@@ -49,7 +50,7 @@ var handleLine = function handleLine(player, said) {
     });
     if (!knownCommand) {
         console.log('unknown command- ' + said + ' char0='+ said[0]);
-        if (said[0]) === '!' {
+        if (said[0] === '!') {
             red.createClient(redisOpts);
             red.rpush('mcsh:server:chat:unknownCommands', said);
             red.end();
