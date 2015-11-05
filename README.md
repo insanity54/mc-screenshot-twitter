@@ -90,7 +90,7 @@ just use `npm start` or `node index` and it's an interactive shell
 #### screenshot command
 
 * [x] mcShasta receives `!screenshot` command from player
-* [ ] mcShasta creates screenshot job on server, notifies observer
+* [x] mcShasta creates screenshot job on server, notifies observer
   * job id created in redis (id = INCR mcsh:observer:queue:index)
   * observer screenshot job added to redis (RPUSH mcsh:observer:queue screenshot,{{id}})
   * screenshot message added to redis (SET mcsh:screenshot:{{id}}:message {{message}})
