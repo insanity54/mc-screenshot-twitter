@@ -15,6 +15,7 @@ var commandHandlers = {
         regex: /^ *!(snapshot|screenshot|ss) *(.*)$/i,
         callback: function(player, match) {
             var message = match[2];
+	    job.create('screenshot', player, message);
         }
     },
     tweet: {
@@ -22,6 +23,7 @@ var commandHandlers = {
         callback: function(player, match) {
             var from = player;
             var message = match[2];
+	    job.create('tweet', from, message);
 	}
     }
 };

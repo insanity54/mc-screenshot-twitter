@@ -1,8 +1,9 @@
 var path = require('path');
-var minetroller = require(path.join(__dirname, 'server', 'wraps', 'minetroller'));
 var vorpal = require('vorpal')();
-var tweeter = require(path.join(__dirname, 'server', 'wraps', 'tweeter'));
+var minetroller = require(path.join(__dirname, 'server', 'minetroller'));
+var tweeter = require(path.join(__dirname, 'server', 'tweeter'));
 var observer = require(path.join(__dirname, 'server', 'observer'));
+
 
 
 
