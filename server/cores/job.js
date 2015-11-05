@@ -24,10 +24,12 @@ assert.isDefined(redisOpts, 'redis client options not defined in config.json');
  * creates a job in redis
  *
  * @param {string} type - the type of job to create. (screenshot|tweet)
+ * @param {string} player - the player issuing the command
+ * @param {string} params - the parameters sent to the command
  */
-var create = function create(type, params) {
-  assert.isString(type, 'job.create got a parameter that was not a string. its first and only param must be a string');
-  
+var create = function create(type, player, params) {
+  assert.isString(type, 'job.create received first parameter that was not a string. its first param must be a string');
+  assert.isString(player, 'job.create received second parameter that was not a string. its second param must be a string');
   red = redis.createClient(redisOpts);
   
   // get job id from redis
@@ -37,8 +39,29 @@ var create = function create(type, params) {
     console.log('redis index=' + reply);
     
     // add job to redis
-    red.SET('mcsh:job:'+type+':'+id+':player',  
-    red.SET('mcsh:job:screenshot:'+id+':message' +
+    // set requesting player
+    red.SET('mcsh:job:'+type+':'+id+':player', player, function(err, reply) {
+      assert.isNull(err, 'error entering requesting player in redis failed with error');
+      assert.equal(reply, 'OK', 'entering requesting player in redis did not return OK');
+    
+      // set time
+      red.SET('mcsh:job:'+type+':'+id+':time', moment().valueOf(), function(err, reply) {
+        assert.isNull(err, 'error entering time in redis');
+        assert.equal(reply, 'OK', 'entering time in redis did not return OK');
+        
+        // set message (if there is one)
+        if (typeof(params) !== 'undefined') {
+          red.SET('mcsh:job:screenshot:'+id+':message', params, function(err, reply) {
+            assert.isNull(err, 'error entering message in redis');
+            assert.equal(reply, 'OK', 'entering message in redis did not return OK');
+          });
+          red.close();
+        }
+        else {
+          red.close();
+        }
+      });
+    } 
   });
 }
 
