@@ -11,10 +11,8 @@ A minecraft server wrapper that integrates with twitter.
 
 In game, a player sends a command using the chat. Commands are prefixed with an exclamation mark (!). Commands are similar to CLI commands, sometimes with optional parameters, and are as follows:
 
-```
-!screenshot (MESSAGE)
-!tweet MESSAGE
-```
+* `!screenshot (MESSAGE)`
+* `!tweet MESSAGE`
 
 ## installation
 
