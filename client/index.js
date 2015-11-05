@@ -3,15 +3,14 @@ var async = require('async');
 var assert = require('chai').assert;
 var redis = require('redis');
 var nconf = require('nconf');
-var job = require(path.join(__dirname, 'job'));
+var Worker = require(path.join(__dirname, 'worker'));
 var auth = require(path.join(__dirname, 'auth'));
 var minecraft = require(path.join(__dirname, 'minecraft'));
 var input = require(path.join(__dirname, 'input'));
 var util = require(path.join(__dirname, 'util'));
 
 nconf.file(path.join(__dirname, '..', 'config.json'));
-
-
+var worker = new Worker();
 
 
 var redisOpts = nconf.get('redis_client_options');
@@ -21,31 +20,26 @@ var subscriber = redis.createClient(redisOpts);
 subscriber.subscribe('observer');
 
 subscriber.on('message', function (channel, message) {
-    console.log('client got redis message. channel=' + channel + ' message=' + message);
+    console.log('client got redis message. channel=' + channel + ' message=' + message + ' workerAvailable=' + worker.isAvailable);
+    
+    // only read the message if worker is available
+    if (worker.isAvailable) {
+        
+        // get job type and details
+        worker.getFirstJob(function (err, details) {
+            assert.isNull(err, 'error while getting first job');
+            assert.isObject(details, 'getting details did not get an object');
+            console.log('got first job. deets- ');
+            console.log(details);
 
-    // get job type and details
-    job.getFirst(function(err, details) {
-	assert.isNull(err, 'error while getting first job');
-	assert.isObject(details, 'getting details did not get an object');
+            worker.execute(details, function(err) {
+                assert.isNull(err, 'problem executing job');
+                console.log('job executed');
+            });
 
-	// job type is screenshot
-        if (details.type === 'screenshot') {
-            console.log('job type is screenshot');
-	    // start minecraft
-	    async.series([
-		auth.makeReady,
-		minecraft.start,
-		minecraft.waitForTp,
-		input.takeScreenshot,
-		util.uploadScreenshot
-	    ], function (err, results) {
-		if (err) throw err;
-		console.log('async.series finished without error');
-	    });            
-        }
-
-	// job type is something else
-	// else {
-	// }
-    });
+            // job type is something else
+            // else {
+            // }
+        });
+    }
 });

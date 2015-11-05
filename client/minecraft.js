@@ -19,7 +19,7 @@ var game = new Minecraft.Game();
 
 var start = function start(cb) {
     game.start();
-    game.on('connecting', function(server, port) {
+    game.once('connecting', function(server, port) {
         console.log('minecraft is connecting to server=' + server + ' port=' + port);
         return cb(null);
     });
@@ -41,24 +41,21 @@ var nameToUUID = function nameToUUID(cb) {
 var waitForTeleport = function waitForTeleport(cb) {
     console.log('waiting 4 teleport!');
     
-    // take action if teleport message seen in minecraft stdin
-    game.on('teleport', function(message) {
+    function onTeleport(message) {
         if (typeof(timeoutTimer) !== 'undefined') clearTimeout(timeoutTimer);
         console.log('got TELEPORTATION ' + message);
         return cb(null);
-    });
+    }
+    
+    // take action if teleport message seen in minecraft stdin
+    game.once('teleport', onTeleport);
     console.log(game.listeners('teleport'));
     
     // time out if 20 seconds elapsed without teleport
     var timeout = function timeout() {
-        function onListenerRemoved(err) {
-            console.log("removed teleport listener");
-            if (err) throw err;
-            return cb(new Error('time out waiting for teleport'));
-        }
-        
         console.log('timed out waiting for teleport.');
-        game.removeListener('teleport', onListenerRemoved);
+        game.removeListener('teleport', onTeleport);
+        return cb(new Error('time out waiting for teleport'));
     }
     var timeoutTimer = setTimeout(timeout, 20000); // 20 seconds
     
