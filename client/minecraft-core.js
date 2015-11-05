@@ -264,7 +264,7 @@ var specialMessageHandlers = {
 Game.prototype.handleLine = function handleLine(line) {
     var self = this;
     
-    console.log('got line- ' + line);
+    if (line.length > 0) console.log('got line- ^' + line + '$');
     var match = messageParser.exec(line);
 
     var knownMessage = false;

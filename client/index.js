@@ -10,7 +10,6 @@ var input = require(path.join(__dirname, 'input'));
 var util = require(path.join(__dirname, 'util'));
 
 nconf.file(path.join(__dirname, '..', 'config.json'));
-var worker = new Worker();
 
 
 var redisOpts = nconf.get('redis_client_options');
@@ -20,6 +19,7 @@ var subscriber = redis.createClient(redisOpts);
 subscriber.subscribe('observer');
 
 subscriber.on('message', function (channel, message) {
+    var worker = new Worker();
     console.log('client got redis message. channel=' + channel + ' message=' + message + ' workerAvailable=' + worker.isAvailable);
     
     // only read the message if worker is available
@@ -32,14 +32,11 @@ subscriber.on('message', function (channel, message) {
             console.log('got first job. deets- ');
             console.log(details);
 
+            // execute the job
             worker.execute(details, function(err) {
-                assert.isNull(err, 'problem executing job');
+                if (err) return console.error('problem executing job- ' + err);
                 console.log('job executed');
             });
-
-            // job type is something else
-            // else {
-            // }
         });
     }
 });

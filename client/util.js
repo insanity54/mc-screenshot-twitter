@@ -60,7 +60,7 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
         });
 
         // the last arrey element will be the most recent
-        console.log(results);
+        //console.log(results);
 //        console.log('most recent - ' + results[results.length-1])
         return cb(null, results[results.length-1]);
     });
