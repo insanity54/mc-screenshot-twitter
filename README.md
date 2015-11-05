@@ -1,4 +1,4 @@
-# mcsh
+# mcShasta
 
 A minecraft server wrapper that integrates with twitter.
 
@@ -57,21 +57,36 @@ libxtst-dev libpng-dev  (for robotjs, automates keyboard events in minecraft cli
 
 #### screenshot command
 
-* mcsh receives `!screenshot` command from player
-* mcsh creates screenshot job on server, notifies observer
-  * observer screenshot job added to redis (RPUSH mcsh:observer:queue screenshot)
+* mcShasta receives `!screenshot` command from player
+* mcShasta creates screenshot job on server, notifies observer
+  * job id created in redis (id = INCR mcsh:observer:queue:index)
+  * observer screenshot job added to redis (RPUSH mcsh:observer:queue screenshot,{{id}})
+  * screenshot message added to redis (SET mcsh:screenshot:{{id}}:message {{message}})
+  * screenshot player added to redis  (SET mcsh:screenshot:{{id}}:player  {{player}})
+  * screenshot time added to redis    (SET mcsh:screenshot:{{id}}:time    {{time}})
   * job notification published to observer channel in redis (PUBLISH observer job)
+* server waits for observer to join
+  * 'join' listener type added in ./server/wraps/minetroller.js
 * observer hears redis publication
   * observer is subscribed to redis observer channel and sees job notif
-  * observer checks redis for job type (LPOP mcsh:observer:queue)
+  * observer checks redis for job deets
+    * LRANGE mcsh:observer:queue 0 0
+    * GET mcsh:screenshot:{{id}}:player
+    * GET mcsh:screenshot:{{id}}:message
 * observer joins server
   * observer authenticates using yggdrasil
   * observer starts up minecraft client & connects to server using child_process
-* server waits for 
-  * wait for observer to join the server
+* server sees observer joined 
+  * minecraft-control emits 'join' event, minetroller responds
+* server checks the active job type
+  * in redis (LRANGE mcsh:observer:queue 0 0)
+  * GET mcsh:screenshot:{{id}}:player
+  * GET mcsh:screenshot:{{id}}:message
+  * server sees job type is screenshot and the requesting player is {{player}}
   * teleport observer to requesting player
   * observer takes screenshot
   * observer uploads screenshot to redis
-  * observer notifies server that it's done
-  * 
+  * observer removes job from queue and notifies server that it's done
+    * LPOP mcsh:observer:queue
+    * PUBLISH observer done
 
