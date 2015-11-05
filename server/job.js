@@ -39,28 +39,36 @@ var create = function create(type, player, params) {
     console.log('redis index=' + id);
     
     // add job to redis
-    // set requesting player
-    self.red.SET('mcsh:job:'+type+':'+id+':player', player, function(err, reply) {
-      assert.isNull(err, 'error entering requesting player in redis failed with error');
-      assert.equal(reply, 'OK', 'entering requesting player in redis did not return OK');
-    
-      // set time
-      self.red.SET('mcsh:job:'+type+':'+id+':time', moment().valueOf(), function(err, reply) {
-        assert.isNull(err, 'error entering time in redis');
-        assert.equal(reply, 'OK', 'entering time in redis did not return OK');
-        
-        // set message (if there is one)
-        if (typeof(params) !== 'undefined') {
-          self.red.SET('mcsh:job:screenshot:'+id+':message', params, function(err, reply) {
-            assert.isNull(err, 'error entering message in redis');
-            assert.equal(reply, 'OK', 'entering message in redis did not return OK');
-
+    self.red.RPUSH('mcsh:observer:queue', type+','+id, function(err, reply) {
+      assert.isNull(err, 'error adding job to queue');
+      assert.isNumber(reply, 'expected reply to be a number');
+      
+      
+  
+      
+      // set requesting player
+      self.red.SET('mcsh:job:'+type+':'+id+':player', player, function(err, reply) {
+        assert.isNull(err, 'error entering requesting player in redis failed with error');
+        assert.equal(reply, 'OK', 'entering requesting player in redis did not return OK');
+      
+        // set time
+        self.red.SET('mcsh:job:'+type+':'+id+':time', moment().valueOf(), function(err, reply) {
+          assert.isNull(err, 'error entering time in redis');
+          assert.equal(reply, 'OK', 'entering time in redis did not return OK');
+          
+          // set message (if there is one)
+          if (typeof(params) !== 'undefined') {
+            self.red.SET('mcsh:job:screenshot:'+id+':message', params, function(err, reply) {
+              assert.isNull(err, 'error entering message in redis');
+              assert.equal(reply, 'OK', 'entering message in redis did not return OK');
+  
+              finalize.call(self);
+            });
+          }
+          else {
             finalize.call(self);
-          });
-        }
-        else {
-          finalize.call(self);
-        }
+          }
+        });
       });
     });
   });
