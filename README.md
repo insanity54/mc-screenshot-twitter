@@ -89,28 +89,28 @@ just use `npm start` or `node index` and it's an interactive shell
 
 #### screenshot command
 
-* mcShasta receives `!screenshot` command from player
-* mcShasta creates screenshot job on server, notifies observer
+* [x] mcShasta receives `!screenshot` command from player
+* [ ] mcShasta creates screenshot job on server, notifies observer
   * job id created in redis (id = INCR mcsh:observer:queue:index)
   * observer screenshot job added to redis (RPUSH mcsh:observer:queue screenshot,{{id}})
   * screenshot message added to redis (SET mcsh:screenshot:{{id}}:message {{message}})
   * screenshot player added to redis  (SET mcsh:screenshot:{{id}}:player  {{player}})
   * screenshot time added to redis    (SET mcsh:screenshot:{{id}}:time    {{time}})
   * job notification published to observer channel in redis (PUBLISH observer job)
-* server waits for observer to join
+* [ ] server waits for observer to join
   * 'join' listener type added in ./server/wraps/minetroller.js
-* observer hears redis publication
+* [ ] observer hears redis publication
   * observer is subscribed to redis observer channel and sees job notif
   * observer checks redis for job deets
     * LRANGE mcsh:observer:queue 0 0
     * GET mcsh:screenshot:{{id}}:player
     * GET mcsh:screenshot:{{id}}:message
-* observer joins server
+* [ ] observer joins server
   * observer authenticates using yggdrasil
   * observer starts up minecraft client & connects to server using child_process
-* server sees observer joined 
+* [ ] server sees observer joined 
   * minecraft-control emits 'join' event, minetroller responds
-* server checks the active job type
+* [ ] server checks the active job type
   * in redis (LRANGE mcsh:observer:queue 0 0)
   * GET mcsh:screenshot:{{id}}:player
   * GET mcsh:screenshot:{{id}}:message
