@@ -17,6 +17,13 @@ assert.isDefined(redisOpts, 'redis client options not defined in config.json');
  * job notification published to observer channel in redis (PUBLISH observer job)
  */
  
+ 
+var cleanUp = function cleanUp() {
+  this.publisher.PUBLISH('observer', 'job');
+  this.publisher.end();
+  this.red.end();
+}
+ 
 
 /**
  * create
@@ -30,41 +37,45 @@ assert.isDefined(redisOpts, 'redis client options not defined in config.json');
 var create = function create(type, player, params) {
   assert.isString(type, 'job.create received first parameter that was not a string. its first param must be a string');
   assert.isString(player, 'job.create received second parameter that was not a string. its second param must be a string');
-  red = redis.createClient(redisOpts);
+  this.red = redis.createClient(redisOpts);
+  this.publisher = redis.createClient(redisOpts);
+  
   
   // get job id from redis
-  red.INCR('mcsh:observer:queue:index', function(err, id) {
+  this.red.INCR('mcsh:observer:queue:index', function(err, id) {
     if (err) throw err;
     assert.isNumber(id, 'redis reply to INCR gave us something that was not a number.');
     console.log('redis index=' + id);
     
     // add job to redis
     // set requesting player
-    red.SET('mcsh:job:'+type+':'+id+':player', player, function(err, reply) {
+    this.red.SET('mcsh:job:'+type+':'+id+':player', player, function(err, reply) {
       assert.isNull(err, 'error entering requesting player in redis failed with error');
       assert.equal(reply, 'OK', 'entering requesting player in redis did not return OK');
     
       // set time
-      red.SET('mcsh:job:'+type+':'+id+':time', moment().valueOf(), function(err, reply) {
+      this.red.SET('mcsh:job:'+type+':'+id+':time', moment().valueOf(), function(err, reply) {
         assert.isNull(err, 'error entering time in redis');
         assert.equal(reply, 'OK', 'entering time in redis did not return OK');
         
         // set message (if there is one)
         if (typeof(params) !== 'undefined') {
-          red.SET('mcsh:job:screenshot:'+id+':message', params, function(err, reply) {
+          this.red.SET('mcsh:job:screenshot:'+id+':message', params, function(err, reply) {
             assert.isNull(err, 'error entering message in redis');
             assert.equal(reply, 'OK', 'entering message in redis did not return OK');
+
+            finalize.call(this);
           });
-          red.end();
         }
         else {
-          red.end();
+          finalize.call(this);
         }
       });
     });
   });
 }
   
+
 
 
  
