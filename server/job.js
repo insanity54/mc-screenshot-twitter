@@ -36,7 +36,7 @@ var create = function create(type, player, params) {
   red.INCR('mcsh:observer:queue:index', function(err, id) {
     if (err) throw err;
     assert.isNumber(id, 'redis reply to INCR gave us something that was not a number.');
-    console.log('redis index=' + reply);
+    console.log('redis index=' + id);
     
     // add job to redis
     // set requesting player
@@ -55,10 +55,10 @@ var create = function create(type, player, params) {
             assert.isNull(err, 'error entering message in redis');
             assert.equal(reply, 'OK', 'entering message in redis did not return OK');
           });
-          red.close();
+          red.end();
         }
         else {
-          red.close();
+          red.end();
         }
       });
     });
