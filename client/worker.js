@@ -21,7 +21,7 @@ var Worker = function Worker() {
     this.isAvailable = true;
     this.workingOn = null;
     this.red = redis.createClient(redisOpts);
-
+    this.publisher = redis.createClient(redisOpts);
 }
 
 /**
@@ -34,19 +34,32 @@ Worker.prototype.cleanup = function cleanup() {
     self.workingOn = null;
     self.isAvailable = true;
     this.red.end();
+    this.publisher.end();
 }
 
 /**
  * clearFirstJob
  *
  * remove the first job from the redis queue
+ * also publishes to redis that the job is done
  *
  * @param {onClearedCallback} cb
  */
 Worker.prototype.clearFirstJob = function clearFirstJob(cb) {
-    this.red.LPOP('mcsh:observer:queue', function(err) {
+    var self = this
+    self.red.LPOP('mcsh:observer:queue', function(err, job) {
         if (err) return cb(err);
-        return cb(null);
+
+	// job is in this format:
+	//   TYPE,ID
+	// ex:
+	//   screenshot,32
+	
+	var id = job.split(',')[1];
+	self.publisher.publish('observer', 'done,'+id, function(err) {
+	    if (err) return cb(err);
+	    return cb(null);
+	});
     });
 }
 /**
@@ -137,6 +150,7 @@ Worker.prototype.execute = function execute(details, cb) {
                 }
                 console.log('async.series finished without error');
                 self.clearFirstJob(function(err) {
+		    console.log('marking job as done');
                     if (err) console.error('could not clear first job from the queue');
                     self.cleanup();
                     return(null);

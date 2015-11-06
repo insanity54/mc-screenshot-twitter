@@ -24,19 +24,22 @@ subscriber.on('message', function (channel, message) {
     
     // only read the message if worker is available
     if (worker.isAvailable) {
-        
-        // get job type and details
-        worker.getFirstJob(function (err, details) {
-            assert.isNull(err, 'error while getting first job');
-            assert.isObject(details, 'getting details did not get an object');
-            console.log('got first job. deets- ');
-            console.log(details);
 
-            // execute the job
-            worker.execute(details, function(err) {
-                if (err) return console.error('problem executing job- ' + err);
-                console.log('job executed');
-            });
-        });
+	// only continue if message is saying there's a job
+	if (message == 'job') {
+            // get job type and details
+            worker.getFirstJob(function (err, details) {
+		assert.isNull(err, 'error while getting first job');
+		assert.isObject(details, 'getting details did not get an object');
+		console.log('got first job. deets- ');
+		console.log(details);
+		
+		// execute the job
+		worker.execute(details, function(err) {
+                    if (err) return console.error('problem executing job- ' + err);
+                    console.log('job executed');
+		});
+	    });
+	}
     }
 });
