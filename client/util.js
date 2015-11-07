@@ -60,7 +60,7 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
         });
 
         // the last arrey element will be the most recent
-        console.log(results);
+        //console.log(results);
 //        console.log('most recent - ' + results[results.length-1])
         return cb(null, results[results.length-1]);
     });
@@ -74,6 +74,7 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
  */
 
 
+
 /**
  * uploadScreenshot
  *
@@ -85,7 +86,7 @@ var getLatestScreenshot = function getLatestScreenshot(cb) {
 var uploadScreenshot = function uploadScreenshot(path, cb) {
     
     if (typeof(path) === 'undefined')
-        // path is undefined, problem for sure
+        // path is undefined means we got no parameters... problem for sure
         throw new Error('uploadScreenshot requires the first parameter to be a path to a screenshot or a callback. (it was undefined)');
     
     if (typeof(cb) === 'undefined' && typeof(path) === 'function') {
@@ -132,14 +133,21 @@ var _uploadScreenshot = function _uploadScreenshot(path, cb) {
     var red = redis.createClient(redisOpts);
     fs.readFile(path, { encoding: 'base64' }, function(err, data) {
         if (err) throw err;
-        //fs.writeFileSync(path.join(__dirname, 'testimg.b64'), data); // test image
 
-        red.rpush('mcsh:observer:screenshots', data, function(err) {
-            if (err) throw err;
-            red.end();
-            console.log('screenshot uploaded');
-            return cb(null);
-        });
+	// get the job id
+	red.LRANGE('mcsh:observer:queue', 0, 0, function(err, jobs) {
+	    if (err) return cb(err);
+	    if (typeof(jobs) === 'undefned') return cb(new Error('when attempting to upload screenshot, result of lrange mcsh:observer:queue was empty'));
+	    console.log('uploading screenshot jobs='+jobs+' id=' + id);
+	    var id = jobs[0].split(',')[1];
+	    
+	    red.SET('mcsh:job:screenshot:'+id, data, function(err) {
+		if (err) return cb(err);
+		red.end();
+		console.log('screenshot uploaded');
+		return cb(null);
+	    });
+	});
     });
 }
 /**
@@ -161,7 +169,7 @@ var _uploadScreenshot = function _uploadScreenshot(path, cb) {
 var waitForNewScreenshot = function waitForNewScreenshot(cb) {
     var watch = saw(getScreenshotDirectory());
     watch.once('add', function (file) {
-        //console.log('new screenshot detected. file=' + file.fullPath);
+        console.log('new screenshot detected. file=' + file.fullPath);
         watch.close();
         return cb(null, file.fullPath);
     });
