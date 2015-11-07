@@ -12,6 +12,7 @@ vorpal
     .action(function (args, cb) {
         this.log('starting server');
         minetroller.startServer(function (err) {
+	    
             cb();
         });
     });

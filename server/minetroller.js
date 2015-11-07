@@ -30,6 +30,11 @@ var game = new minecraft.Game({
 });
 
 
+/**
+ * handleJoin
+ *
+ * handles what happens when a player joins the server
+ */
 var handleJoin = function(player) {
 	if (player == observerName)	observer.handleJoin(player, game);
 }
