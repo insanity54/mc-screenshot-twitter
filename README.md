@@ -115,11 +115,15 @@ just use `npm start` or `node index` and it's an interactive shell
   * in redis (LRANGE mcsh:observer:queue 0 0)
   * GET mcsh:screenshot:{{id}}:player
   * GET mcsh:screenshot:{{id}}:message
-  * server sees job type is screenshot and the requesting player is {{player}}
-  * teleport observer to requesting player
-  * observer takes screenshot
-  * observer uploads screenshot to redis
-  * [ ] observer removes job from queue and notifies server that it's done
-    * [x] LPOP mcsh:observer:queue
-    * [x] PUBLISH observer done
+* server sees job type is screenshot and the requesting player is {{player}}
+* server teleports observer to requesting player
+* observer takes screenshot
+* observer uploads screenshot to redis
+* [x] observer removes job from queue and notifies server that it's done
+  * [x] LPOP mcsh:observer:queue
+  * [x] PUBLISH observer done
+* [ ] server hears job is done so server takes message and image and tweets it
+  * [ ] GET mcsh:screenshot:{{id}}:player
+  * [ ] GET mcsh:screenshot:{{id}}:message
+  * tweet
 
