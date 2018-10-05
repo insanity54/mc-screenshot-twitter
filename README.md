@@ -1,5 +1,7 @@
 # mcShasta
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/insanity54/mc-screenshot-twitter.svg)](https://greenkeeper.io/)
+
 A minecraft server wrapper that integrates with twitter.
 
 ## Features
